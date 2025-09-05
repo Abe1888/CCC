@@ -1,36 +1,36 @@
-import React from 'react';
-import dynamic from 'next/dynamic';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import ErrorBoundary from '@/components/ui/ErrorBoundary';
+'use client'
 
-// Optimized lazy loading with better loading states and SSR
-const ProjectStats = dynamic(() => import('./ProjectStats'), {
-  loading: () => <LoadingSpinner text="Loading project statistics..." />,
-  ssr: false,
-});
+import React from 'react'
+import { ProjectStats } from './ProjectStats'
+import { LocationOverview } from './LocationOverview'
+import { ProjectCountdown } from '../ui/ProjectCountdown'
+import { useProjectSettings } from '@/lib/hooks/useSupabase'
 
-const LocationOverview = dynamic(() => import('./LocationOverview'), {
-  loading: () => <LoadingSpinner text="Loading location overview..." />,
-  ssr: false,
-});
+export function Dashboard() {
+  const { projectSettings } = useProjectSettings()
+  const currentStartDate = projectSettings?.project_start_date || new Date().toISOString().split('T')[0]
 
-const Dashboard: React.FC = () => {
   return (
-    <ErrorBoundary>
-      <div className="space-y-6 animate-fade-in">
-        <React.Suspense fallback={<LoadingSpinner text="Loading dashboard components..." />}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ErrorBoundary fallback={<div className="bg-white border border-slate-200 rounded-lg p-8 text-center"><p className="text-sm text-slate-600">Failed to load project statistics</p></div>}>
-              <ProjectStats />
-            </ErrorBoundary>
-            <ErrorBoundary fallback={<div className="bg-white border border-slate-200 rounded-lg p-8 text-center"><p className="text-sm text-slate-600">Failed to load location overview</p></div>}>
-              <LocationOverview />
-            </ErrorBoundary>
-          </div>
-        </React.Suspense>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-600">
+          Monitor project progress and manage installation schedules
+        </p>
       </div>
-    </ErrorBoundary>
-  );
-};
 
-export default Dashboard;
+      {/* Project Countdown */}
+      <ProjectCountdown 
+        startDate={currentStartDate}
+        onCountdownComplete={() => console.log('Project started!')}
+      />
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <ProjectStats />
+        <LocationOverview />
+      </div>
+    </div>
+  )
+}

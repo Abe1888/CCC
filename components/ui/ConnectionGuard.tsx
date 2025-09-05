@@ -1,112 +1,108 @@
-'use client';
+'use client'
 
-import React, { ReactNode } from 'react';
-import { AlertTriangle, Database, RefreshCw } from 'lucide-react';
-import { isSupabaseConfigured } from '@/lib/utils/errorHandler';
+import React, { ReactNode, useEffect, useState } from 'react'
+import { AlertTriangle, Database, RefreshCw } from 'lucide-react'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
 
 interface ConnectionGuardProps {
-  children: ReactNode;
-  fallback?: ReactNode;
+  children: ReactNode
+  fallback?: ReactNode
 }
 
-const ConnectionGuard: React.FC<ConnectionGuardProps> = ({ children, fallback }) => {
-  const [isConfigured, setIsConfigured] = React.useState<boolean | null>(null);
-  const [isChecking, setIsChecking] = React.useState(true);
+export function ConnectionGuard({ children, fallback }: ConnectionGuardProps) {
+  const [isConfigured, setIsConfigured] = useState<boolean | null>(null)
+  const [isChecking, setIsChecking] = useState(true)
   
-  React.useEffect(() => {
+  useEffect(() => {
     // Check configuration on client side only
     if (typeof window !== 'undefined') {
       const checkConfig = () => {
         try {
-          const configured = isSupabaseConfigured();
-          setIsConfigured(configured);
+          const configured = isSupabaseConfigured()
+          setIsConfigured(configured)
         } catch (error) {
-          console.error('Error checking Supabase configuration:', error);
-          setIsConfigured(false);
+          console.error('Error checking Supabase configuration:', error)
+          setIsConfigured(false)
         } finally {
-          setIsChecking(false);
+          setIsChecking(false)
         }
-      };
+      }
       
       // Small delay to prevent hydration issues
-      const timer = setTimeout(checkConfig, 100);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(checkConfig, 100)
+      return () => clearTimeout(timer)
     }
-  }, []);
+  }, [])
   
   // Show loading state during initial check
   if (isChecking || isConfigured === null) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="bg-white border border-slate-200 rounded-lg p-8 max-w-lg w-full text-center">
-          <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-slate-900 mb-2">Initializing Application</h2>
-          <p className="text-sm text-slate-600">Checking database configuration...</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="card max-w-lg w-full text-center">
+          <div className="card-body">
+            <RefreshCw className="w-8 h-8 text-primary-600 animate-spin mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Initializing Application</h2>
+            <p className="text-sm text-gray-600">Checking database configuration...</p>
+          </div>
         </div>
       </div>
-    );
+    )
   }
 
   if (isConfigured === false) {
     if (fallback) {
-      return <>{fallback}</>;
+      return <>{fallback}</>
     }
 
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="bg-white border border-slate-200 rounded-lg p-8 max-w-lg w-full">
-          <div className="text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="card max-w-lg w-full">
+          <div className="card-body text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Database className="w-8 h-8 text-red-600" />
             </div>
             
-            <h2 className="text-xl font-semibold text-slate-900 mb-2">Database Configuration Required</h2>
-            <p className="text-sm text-slate-600 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Database Configuration Required</h2>
+            <p className="text-sm text-gray-600 mb-6">
               To use this application, you need to configure your Supabase database connection.
             </p>
             
-            <div className="bg-slate-50 rounded-lg p-4 mb-6 text-left">
-              <h3 className="text-sm font-semibold text-slate-900 mb-2">Required Environment Variables:</h3>
-              <div className="space-y-1 text-xs font-mono text-slate-700">
+            <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Required Environment Variables:</h3>
+              <div className="space-y-1 text-xs font-mono text-gray-700">
                 <div>NEXT_PUBLIC_SUPABASE_URL=your_project_url</div>
                 <div>NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key</div>
               </div>
             </div>
             
-            <div className="space-y-3">
-              <p className="text-sm text-slate-600">
+            <div className="space-y-3 text-sm text-gray-600 mb-6">
+              <p>
                 1. Create a Supabase project at{' '}
                 <a 
                   href="https://supabase.com" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline"
+                  className="text-primary-600 hover:text-primary-800 underline"
                 >
                   supabase.com
                 </a>
               </p>
-              <p className="text-sm text-slate-600">
-                2. Copy your project URL and anon key from Settings → API
-              </p>
-              <p className="text-sm text-slate-600">
-                3. Add them to your .env.local file
-              </p>
+              <p>2. Copy your project URL and anon key from Settings → API</p>
+              <p>3. Add them to your .env.local file</p>
             </div>
             
             <button
               onClick={() => window.location.reload()}
-              className="btn-primary flex items-center space-x-2 mx-auto mt-6"
+              className="btn-primary"
             >
-              <RefreshCw className="w-4 h-4" />
-              <span>Reload After Setup</span>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reload After Setup
             </button>
           </div>
         </div>
       </div>
-    );
+    )
   }
 
-  return <>{children}</>;
-};
-
-export default ConnectionGuard;
+  return <>{children}</>
+}

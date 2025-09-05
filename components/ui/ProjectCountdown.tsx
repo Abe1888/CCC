@@ -1,96 +1,96 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect, memo } from 'react';
-import { Calendar, Clock, Play, Pause } from 'lucide-react';
+import React, { useState, useEffect } from 'react'
+import { Calendar, Clock, Play, Pause } from 'lucide-react'
 
 interface ProjectCountdownProps {
-  startDate: string;
-  className?: string;
-  onCountdownComplete?: () => void;
+  startDate: string
+  className?: string
+  onCountdownComplete?: () => void
 }
 
 interface TimeRemaining {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-  total: number;
+  days: number
+  hours: number
+  minutes: number
+  seconds: number
+  total: number
 }
 
-const ProjectCountdown: React.FC<ProjectCountdownProps> = memo(({ 
+export function ProjectCountdown({ 
   startDate, 
   className = '',
   onCountdownComplete 
-}) => {
+}: ProjectCountdownProps) {
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining>({
     days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
     total: 0
-  });
-  const [isActive, setIsActive] = useState(true);
+  })
+  const [isActive, setIsActive] = useState(true)
 
   const calculateTimeRemaining = (targetDate: string): TimeRemaining => {
-    const now = new Date().getTime();
-    const target = new Date(targetDate).getTime();
-    const difference = target - now;
+    const now = new Date().getTime()
+    const target = new Date(targetDate).getTime()
+    const difference = target - now
 
     if (difference <= 0) {
-      return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
+      return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 }
     }
 
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000)
 
-    return { days, hours, minutes, seconds, total: difference };
-  };
+    return { days, hours, minutes, seconds, total: difference }
+  }
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive) return
 
     const timer = setInterval(() => {
-      const remaining = calculateTimeRemaining(startDate);
-      setTimeRemaining(remaining);
+      const remaining = calculateTimeRemaining(startDate)
+      setTimeRemaining(remaining)
 
       if (remaining.total <= 0 && onCountdownComplete) {
-        onCountdownComplete();
+        onCountdownComplete()
       }
-    }, 1000);
+    }, 1000)
 
-    return () => clearInterval(timer);
-  }, [startDate, isActive, onCountdownComplete]);
+    return () => clearInterval(timer)
+  }, [startDate, isActive, onCountdownComplete])
 
   // Initial calculation
   useEffect(() => {
-    const remaining = calculateTimeRemaining(startDate);
-    setTimeRemaining(remaining);
-  }, [startDate]);
+    const remaining = calculateTimeRemaining(startDate)
+    setTimeRemaining(remaining)
+  }, [startDate])
 
   const formatNumber = (num: number): string => {
-    return num.toString().padStart(2, '0');
-  };
+    return num.toString().padStart(2, '0')
+  }
 
-  const isProjectStarted = timeRemaining.total <= 0;
-  const isStartingSoon = timeRemaining.days <= 7 && timeRemaining.total > 0;
+  const isProjectStarted = timeRemaining.total <= 0
+  const isStartingSoon = timeRemaining.days <= 7 && timeRemaining.total > 0
 
   return (
-    <div className={`bg-white border border-slate-200 rounded-lg overflow-hidden ${className}`}>
-      <div className="px-6 py-4 border-b border-slate-200">
+    <div className={`card ${className}`}>
+      <div className="card-header">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className={`w-8 h-8 rounded-md flex items-center justify-center ${
-              isProjectStarted ? 'bg-green-600' : isStartingSoon ? 'bg-orange-600' : 'bg-blue-600'
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isProjectStarted ? 'bg-green-600' : isStartingSoon ? 'bg-orange-600' : 'bg-primary-600'
             }`}>
-              <Calendar className="w-4 h-4 text-white" />
+              <Calendar className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-semibold text-gray-900">
                 {isProjectStarted ? 'Project Started!' : 'Project Countdown'}
               </h3>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-gray-600">
                 {isProjectStarted 
                   ? 'Installation project is now active'
                   : `Project starts on: ${new Date(startDate).toLocaleDateString('en-US', {
@@ -106,10 +106,10 @@ const ProjectCountdown: React.FC<ProjectCountdownProps> = memo(({
           
           <button
             onClick={() => setIsActive(!isActive)}
-            className={`p-2 rounded-md transition-colors ${
+            className={`p-2 rounded-lg transition-colors ${
               isActive 
-                ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-primary-100 text-primary-600 hover:bg-primary-200' 
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
             aria-label={isActive ? 'Pause countdown' : 'Resume countdown'}
           >
@@ -118,7 +118,7 @@ const ProjectCountdown: React.FC<ProjectCountdownProps> = memo(({
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="card-body">
         {isProjectStarted ? (
           <div className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -135,38 +135,38 @@ const ProjectCountdown: React.FC<ProjectCountdownProps> = memo(({
             <div className="grid grid-cols-4 gap-4 mb-6">
               <div className="text-center">
                 <div className={`text-3xl font-bold ${
-                  isStartingSoon ? 'text-orange-600' : 'text-blue-600'
+                  isStartingSoon ? 'text-orange-600' : 'text-primary-600'
                 }`}>
                   {formatNumber(timeRemaining.days)}
                 </div>
-                <div className="text-xs text-slate-600 font-medium">DAYS</div>
+                <div className="text-xs text-gray-600 font-medium">DAYS</div>
               </div>
               
               <div className="text-center">
                 <div className={`text-3xl font-bold ${
-                  isStartingSoon ? 'text-orange-600' : 'text-blue-600'
+                  isStartingSoon ? 'text-orange-600' : 'text-primary-600'
                 }`}>
                   {formatNumber(timeRemaining.hours)}
                 </div>
-                <div className="text-xs text-slate-600 font-medium">HOURS</div>
+                <div className="text-xs text-gray-600 font-medium">HOURS</div>
               </div>
               
               <div className="text-center">
                 <div className={`text-3xl font-bold ${
-                  isStartingSoon ? 'text-orange-600' : 'text-blue-600'
+                  isStartingSoon ? 'text-orange-600' : 'text-primary-600'
                 }`}>
                   {formatNumber(timeRemaining.minutes)}
                 </div>
-                <div className="text-xs text-slate-600 font-medium">MINUTES</div>
+                <div className="text-xs text-gray-600 font-medium">MINUTES</div>
               </div>
               
               <div className="text-center">
                 <div className={`text-3xl font-bold ${
-                  isStartingSoon ? 'text-orange-600' : 'text-blue-600'
+                  isStartingSoon ? 'text-orange-600' : 'text-primary-600'
                 }`}>
                   {formatNumber(timeRemaining.seconds)}
                 </div>
-                <div className="text-xs text-slate-600 font-medium">SECONDS</div>
+                <div className="text-xs text-gray-600 font-medium">SECONDS</div>
               </div>
             </div>
 
@@ -174,20 +174,20 @@ const ProjectCountdown: React.FC<ProjectCountdownProps> = memo(({
             <div className={`text-center p-4 rounded-lg border ${
               isStartingSoon 
                 ? 'bg-orange-50 border-orange-200' 
-                : 'bg-blue-50 border-blue-200'
+                : 'bg-primary-50 border-primary-200'
             }`}>
               <div className="flex items-center justify-center space-x-2 mb-2">
                 <Clock className={`w-4 h-4 ${
-                  isStartingSoon ? 'text-orange-600' : 'text-blue-600'
+                  isStartingSoon ? 'text-orange-600' : 'text-primary-600'
                 }`} />
                 <span className={`text-sm font-medium ${
-                  isStartingSoon ? 'text-orange-800' : 'text-blue-800'
+                  isStartingSoon ? 'text-orange-800' : 'text-primary-800'
                 }`}>
                   {isStartingSoon ? 'Starting Soon!' : 'Countdown Active'}
                 </span>
               </div>
               <p className={`text-xs ${
-                isStartingSoon ? 'text-orange-700' : 'text-blue-700'
+                isStartingSoon ? 'text-orange-700' : 'text-primary-700'
               }`}>
                 {isStartingSoon 
                   ? 'Project starts in less than a week. Prepare for installation activities.'
@@ -199,29 +199,25 @@ const ProjectCountdown: React.FC<ProjectCountdownProps> = memo(({
             {/* Progress Bar */}
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-slate-700">Time Progress</span>
-                <span className="text-xs text-slate-600">
+                <span className="text-xs font-medium text-gray-700">Time Progress</span>
+                <span className="text-xs text-gray-600">
                   {timeRemaining.days > 0 ? `${timeRemaining.days} days remaining` : 'Starting today!'}
                 </span>
               </div>
-              <div className="w-full bg-slate-200 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
                   className={`h-2 rounded-full transition-all duration-1000 ${
-                    isStartingSoon ? 'bg-orange-500' : 'bg-blue-500'
+                    isStartingSoon ? 'bg-orange-500' : 'bg-primary-500'
                   }`}
                   style={{ 
                     width: `${Math.max(0, Math.min(100, 100 - (timeRemaining.days / 30) * 100))}%` 
                   }}
-                ></div>
+                />
               </div>
             </div>
           </>
         )}
       </div>
     </div>
-  );
-});
-
-ProjectCountdown.displayName = 'ProjectCountdown';
-
-export default ProjectCountdown;
+  )
+}

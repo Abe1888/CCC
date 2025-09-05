@@ -1,43 +1,28 @@
-'use client';
+'use client'
 
-import React, { memo, useMemo } from 'react';
-import { Calendar, MapPin, Truck, Navigation, Fuel, Users, BarChart3, AlertTriangle } from 'lucide-react';
-import { useVehiclesSWR, useLocationsSWR, useTeamMembersSWR } from '@/lib/hooks/useSWR';
+import React, { useMemo } from 'react'
+import { 
+  Calendar, MapPin, Truck, Navigation, Fuel, Users, 
+  BarChart3, AlertTriangle 
+} from 'lucide-react'
+import { useVehicles, useLocations, useTeamMembers } from '@/lib/hooks/useSupabase'
+import { LoadingSpinner } from '../ui/LoadingSpinner'
 
-const ProjectStats = memo(() => {
-  const { data: vehicles = [], isLoading: vehiclesLoading } = useVehiclesSWR();
-  const { data: locations = [], isLoading: locationsLoading } = useLocationsSWR();
-  const { data: teamMembers = [], isLoading: teamLoading } = useTeamMembersSWR();
+export function ProjectStats() {
+  const { data: vehicles = [], isLoading: vehiclesLoading, error: vehiclesError } = useVehicles()
+  const { data: locations = [], isLoading: locationsLoading } = useLocations()
+  const { data: teamMembers = [], isLoading: teamLoading } = useTeamMembers()
   
-  const loading = vehiclesLoading || locationsLoading || teamLoading;
-  
-  // Add timeout for loading state
-  const [hasTimedOut, setHasTimedOut] = React.useState(false);
-  
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      if (loading) {
-        setHasTimedOut(true);
-      }
-    }, 15000); // 15 second timeout
-    
-    return () => clearTimeout(timer);
-  }, [loading]);
-  
-  React.useEffect(() => {
-    if (!loading) {
-      setHasTimedOut(false);
-    }
-  }, [loading]);
+  const loading = vehiclesLoading || locationsLoading || teamLoading
   
   // Memoize expensive calculations
   const stats = useMemo(() => {
-    const totalGpsDevices = locations.reduce((sum, loc) => sum + loc.gps_devices, 0);
-    const totalFuelSensors = locations.reduce((sum, loc) => sum + loc.fuel_sensors, 0);
-    const totalVehicles = vehicles.length;
-    const completedVehicles = vehicles.filter(v => v.status === 'Completed').length;
-    const progressPercentage = totalVehicles > 0 ? Math.round((completedVehicles / totalVehicles) * 100) : 0;
-    const specialRequirements = vehicles.filter(v => v.fuel_tanks > 1);
+    const totalGpsDevices = locations.reduce((sum, loc) => sum + (loc.gps_devices || 0), 0)
+    const totalFuelSensors = locations.reduce((sum, loc) => sum + (loc.fuel_sensors || 0), 0)
+    const totalVehicles = vehicles.length
+    const completedVehicles = vehicles.filter(v => v.status === 'Completed').length
+    const progressPercentage = totalVehicles > 0 ? Math.round((completedVehicles / totalVehicles) * 100) : 0
+    const specialRequirements = vehicles.filter(v => (v.fuel_tanks || 0) > 1).length
     
     return {
       totalGpsDevices,
@@ -46,142 +31,123 @@ const ProjectStats = memo(() => {
       completedVehicles,
       progressPercentage,
       specialRequirements
-    };
-  }, [vehicles, locations]);
+    }
+  }, [vehicles, locations])
   
-  if (loading && !hasTimedOut) {
+  if (loading) {
     return (
-      <div className="bg-white border border-slate-200 rounded-lg p-8 text-center animate-pulse">
-        <div className="text-sm text-slate-600">Loading project statistics...</div>
+      <div className="card">
+        <div className="card-body">
+          <LoadingSpinner text="Loading project statistics..." />
+        </div>
       </div>
-    );
+    )
   }
-  
-  if (hasTimedOut) {
+
+  if (vehiclesError) {
     return (
-      <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
-        <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-slate-900 mb-2">Loading Timeout</h3>
-        <p className="text-sm text-slate-600 mb-4">Data is taking longer than expected to load.</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="btn-primary"
-        >
-          Reload Page
-        </button>
+      <div className="card">
+        <div className="card-body text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Data</h3>
+          <p className="text-sm text-gray-600">Failed to load project statistics</p>
+        </div>
       </div>
-    );
-  }
-  
-  // Handle empty data gracefully
-  if (stats.totalVehicles === 0 && locations.length === 0) {
-    return (
-      <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
-        <BarChart3 className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-slate-900 mb-2">No Data Available</h3>
-        <p className="text-sm text-slate-600 mb-4">Project data is being loaded or not yet available.</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="btn-secondary"
-        >
-          Refresh Data
-        </button>
-      </div>
-    );
+    )
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg animate-slide-up">
-      <div className="px-6 py-4 border-b border-slate-200">
+    <div className="card">
+      <div className="card-header">
         <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
-            <BarChart3 className="w-3 h-3 text-white" />
+          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-slate-900">Project Statistics</h3>
-            <p className="text-sm text-slate-600">Comprehensive project overview</p>
+            <h3 className="text-lg font-semibold text-gray-900">Project Statistics</h3>
+            <p className="text-sm text-gray-600">Comprehensive project overview</p>
           </div>
         </div>
       </div>
       
-      <div className="p-6">
+      <div className="card-body">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Vehicle Statistics */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-slate-700">Vehicle Fleet</h4>
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-gray-700">Vehicle Fleet</h4>
             
-            <div className="bg-blue-50 rounded-md p-4 border border-blue-200">
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <Truck className="w-4 h-4 text-blue-600" />
+                  <Truck className="w-5 h-5 text-blue-600" />
                   <span className="text-sm font-medium text-blue-800">Total Vehicles</span>
                 </div>
-                <span className="text-xl font-semibold text-blue-900">{stats.totalVehicles}</span>
+                <span className="text-2xl font-bold text-blue-900">{stats.totalVehicles}</span>
               </div>
               <div className="text-xs text-blue-700">Across 3 major locations</div>
             </div>
 
-            <div className="bg-orange-50 rounded-md p-4 border border-orange-200">
+            <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <AlertTriangle className="w-4 h-4 text-orange-600" />
+                  <AlertTriangle className="w-5 h-5 text-orange-600" />
                   <span className="text-sm font-medium text-orange-800">Special Requirements</span>
                 </div>
-                <span className="text-xl font-semibold text-orange-900">{stats.specialRequirements.length}</span>
+                <span className="text-2xl font-bold text-orange-900">{stats.specialRequirements}</span>
               </div>
               <div className="text-xs text-orange-700">Double fuel tank vehicles</div>
             </div>
           </div>
 
           {/* Equipment Statistics */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-slate-700">Equipment</h4>
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-gray-700">Equipment</h4>
             
-            <div className="bg-green-50 rounded-md p-4 border border-green-200">
+            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <Navigation className="w-4 h-4 text-green-600" />
+                  <Navigation className="w-5 h-5 text-green-600" />
                   <span className="text-sm font-medium text-green-800">GPS Devices</span>
                 </div>
-                <span className="text-xl font-semibold text-green-900">{stats.totalGpsDevices}</span>
+                <span className="text-2xl font-bold text-green-900">{stats.totalGpsDevices}</span>
               </div>
               <div className="text-xs text-green-700">One per vehicle</div>
             </div>
 
-            <div className="bg-teal-50 rounded-md p-4 border border-teal-200">
+            <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <Fuel className="w-4 h-4 text-teal-600" />
+                  <Fuel className="w-5 h-5 text-teal-600" />
                   <span className="text-sm font-medium text-teal-800">Fuel Sensors</span>
                 </div>
-                <span className="text-xl font-semibold text-teal-900">{stats.totalFuelSensors}</span>
+                <span className="text-2xl font-bold text-teal-900">{stats.totalFuelSensors}</span>
               </div>
               <div className="text-xs text-teal-700">Including double-tank configs</div>
             </div>
           </div>
 
           {/* Timeline Statistics */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-slate-700">Timeline</h4>
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-gray-700">Timeline</h4>
             
-            <div className="bg-purple-50 rounded-md p-4 border border-purple-200">
+            <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4 text-purple-600" />
+                  <Calendar className="w-5 h-5 text-purple-600" />
                   <span className="text-sm font-medium text-purple-800">Project Duration</span>
                 </div>
-                <span className="text-xl font-semibold text-purple-900">14</span>
+                <span className="text-2xl font-bold text-purple-900">14</span>
               </div>
               <div className="text-xs text-purple-700">Working days</div>
             </div>
 
-            <div className="bg-indigo-50 rounded-md p-4 border border-indigo-200">
+            <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <Users className="w-4 h-4 text-indigo-600" />
+                  <Users className="w-5 h-5 text-indigo-600" />
                   <span className="text-sm font-medium text-indigo-800">Team Members</span>
                 </div>
-                <span className="text-xl font-semibold text-indigo-900">{teamMembers.length}</span>
+                <span className="text-2xl font-bold text-indigo-900">{teamMembers.length}</span>
               </div>
               <div className="text-xs text-indigo-700">Installation technicians</div>
             </div>
@@ -189,23 +155,25 @@ const ProjectStats = memo(() => {
         </div>
 
         {/* Location Breakdown */}
-        <div className="mt-6 pt-6 border-t border-slate-200">
-          <h4 className="text-sm font-medium text-slate-700 mb-4">Location Breakdown</h4>
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <h4 className="text-sm font-medium text-gray-700 mb-4">Location Breakdown</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {locations.map((location, index) => (
-              <div key={location.name} className="bg-slate-50 rounded-md p-4 border border-slate-200">
+            {locations.map((location) => (
+              <div key={location.name} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
-                    <MapPin className="w-4 h-4 text-slate-600" />
-                    <span className="text-sm font-medium text-slate-900">{location.name}</span>
+                    <MapPin className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">{location.name}</span>
                   </div>
-                  <span className="text-xs text-slate-600 bg-slate-200 px-2 py-1 rounded">{location.duration}</span>
+                  <span className="text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded">
+                    {location.duration}
+                  </span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <div className="text-lg font-semibold text-slate-900">{location.vehicles}</div>
-                    <div className="text-xs text-slate-600">Vehicles</div>
+                    <div className="text-lg font-semibold text-gray-900">{location.vehicles}</div>
+                    <div className="text-xs text-gray-600">Vehicles</div>
                   </div>
                   <div>
                     <div className="text-lg font-semibold text-blue-600">{location.gps_devices}</div>
@@ -222,9 +190,5 @@ const ProjectStats = memo(() => {
         </div>
       </div>
     </div>
-  );
-});
-
-ProjectStats.displayName = 'ProjectStats';
-
-export default ProjectStats;
+  )
+}
